@@ -1,10 +1,32 @@
 import Head from 'next/head';
-import Image from 'next/image';
-import { Inter } from '@next/font/google';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Chess } from 'chess.js';
+import { Move, Piece, ShortMove, Square } from '@/types/chess';
 
-const inter = Inter({ subsets: ['latin'] });
+const Chessboard = dynamic(() => import('chessboardjsx'), { ssr: false });
 
 export default function Home() {
+  const [game] = useState(new Chess());
+
+  const [fen, setFen] = useState(game.fen());
+
+  const handleMove = ({
+    sourceSquare,
+    targetSquare,
+  }: {
+    sourceSquare: Square;
+    targetSquare: Square;
+  }) => {
+    const possibleMoves = game.moves({ verbose: true });
+    const move = possibleMoves.find((move) => {
+      return move.from === sourceSquare && move.to === targetSquare;
+    });
+    if (!move) return;
+    game.move(move.san);
+    setFen(game.fen());
+  };
+
   return (
     <>
       <Head>
@@ -15,6 +37,7 @@ export default function Home() {
       </Head>
       <div>
         <h1>blitz</h1>
+        <Chessboard width={400} position={fen} onDrop={handleMove} />
       </div>
     </>
   );
